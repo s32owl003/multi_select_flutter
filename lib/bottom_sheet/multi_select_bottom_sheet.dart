@@ -119,6 +119,10 @@ class _MultiSelectBottomSheetState<V> extends State<MultiSelectBottomSheet<V>> {
     if (widget.initialValue != null) {
       _selectedValues.addAll(widget.initialValue!);
     }
+
+    // Initialize _items with the original widget.items
+    // This ensures that _items is not empty if searchable is false
+    _items = widget.items;
   }
 
   /// Returns a CheckboxListTile
@@ -126,7 +130,7 @@ class _MultiSelectBottomSheetState<V> extends State<MultiSelectBottomSheet<V>> {
     return Theme(
       data: ThemeData(
         unselectedWidgetColor: widget.unselectedColor ?? Colors.black54,
-        accentColor: widget.selectedColor ?? Theme.of(context).primaryColor,
+        colorScheme: Theme.of(context).colorScheme.copyWith(secondary: widget.selectedColor ?? Theme.of(context).primaryColor),
       ),
       child: CheckboxListTile(
         checkColor: widget.checkColor,
@@ -215,128 +219,130 @@ class _MultiSelectBottomSheetState<V> extends State<MultiSelectBottomSheet<V>> {
         maxChildSize: widget.maxChildSize ?? 0.6,
         expand: false,
         builder: (BuildContext context, ScrollController scrollController) {
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(10),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _showSearch
-                        ? Expanded(
-                            child: Container(
-                              padding: EdgeInsets.only(left: 10),
-                              child: TextField(
-                                autofocus: true,
-                                style: widget.searchTextStyle,
-                                decoration: InputDecoration(
-                                  hintStyle: widget.searchHintStyle,
-                                  hintText: widget.searchHint ?? "Search",
-                                  focusedBorder: UnderlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color: widget.selectedColor ??
-                                            Theme.of(context).primaryColor),
+          return SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _showSearch
+                          ? Expanded(
+                              child: Container(
+                                padding: EdgeInsets.only(left: 10),
+                                child: TextField(
+                                  autofocus: true,
+                                  style: widget.searchTextStyle,
+                                  decoration: InputDecoration(
+                                    hintStyle: widget.searchHintStyle,
+                                    hintText: widget.searchHint ?? "Search",
+                                    focusedBorder: UnderlineInputBorder(
+                                      borderSide: BorderSide(
+                                          color: widget.selectedColor ??
+                                              Theme.of(context).primaryColor),
+                                    ),
                                   ),
+                                  onChanged: (val) {
+                                    setState(() {
+                                      _items = widget.updateSearchQuery(
+                                          val, widget.items);
+                                    });
+                                  },
                                 ),
-                                onChanged: (val) {
-                                  setState(() {
-                                    _items = widget.updateSearchQuery(
-                                        val, widget.items);
-                                  });
-                                },
                               ),
+                            )
+                          : widget.title ??
+                              Text(
+                                "Select",
+                                style: TextStyle(fontSize: 18),
+                              ),
+                      widget.searchable != null && widget.searchable!
+                          ? IconButton(
+                              icon: _showSearch
+                                  ? widget.closeSearchIcon ?? Icon(Icons.close)
+                                  : widget.searchIcon ?? Icon(Icons.search),
+                              onPressed: () {
+                                setState(() {
+                                  _showSearch = !_showSearch;
+                                  if (!_showSearch) _items = widget.items;
+                                });
+                              },
+                            )
+                          : Padding(
+                              padding: EdgeInsets.all(15),
                             ),
-                          )
-                        : widget.title ??
-                            Text(
-                              "Select",
-                              style: TextStyle(fontSize: 18),
-                            ),
-                    widget.searchable != null && widget.searchable!
-                        ? IconButton(
-                            icon: _showSearch
-                                ? widget.closeSearchIcon ?? Icon(Icons.close)
-                                : widget.searchIcon ?? Icon(Icons.search),
-                            onPressed: () {
-                              setState(() {
-                                _showSearch = !_showSearch;
-                                if (!_showSearch) _items = widget.items;
-                              });
-                            },
-                          )
-                        : Padding(
-                            padding: EdgeInsets.all(15),
-                          ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              Expanded(
-                child: widget.listType == null ||
-                        widget.listType == MultiSelectListType.LIST
-                    ? ListView.builder(
-                        controller: scrollController,
-                        itemCount: _items.length,
-                        itemBuilder: (context, index) {
-                          return _buildListItem(_items[index]);
-                        },
-                      )
-                    : SingleChildScrollView(
-                        controller: scrollController,
-                        child: Container(
-                          padding: EdgeInsets.all(10),
-                          child: Wrap(
-                            children: _items.map(_buildChipItem).toList(),
+                Expanded(
+                  child: widget.listType == null ||
+                          widget.listType == MultiSelectListType.LIST
+                      ? ListView.builder(
+                          controller: scrollController,
+                          itemCount: _items.length,
+                          itemBuilder: (context, index) {
+                            return _buildListItem(_items[index]);
+                          },
+                        )
+                      : SingleChildScrollView(
+                          controller: scrollController,
+                          child: Container(
+                            padding: EdgeInsets.all(10),
+                            child: Wrap(
+                              children: _items.map(_buildChipItem).toList(),
+                            ),
                           ),
                         ),
-                      ),
-              ),
-              Container(
-                padding: EdgeInsets.all(2),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () {
-                          widget.onCancelTap(context, widget.initialValue!);
-                        },
-                        child: widget.cancelText ??
-                            Text(
-                              "CANCEL",
-                              style: TextStyle(
-                                color: (widget.selectedColor != null &&
-                                        widget.selectedColor !=
-                                            Colors.transparent)
-                                    ? widget.selectedColor!.withOpacity(1)
-                                    : Theme.of(context).primaryColor,
-                              ),
-                            ),
-                      ),
-                    ),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () {
-                          widget.onConfirmTap(
-                              context, _selectedValues, widget.onConfirm);
-                        },
-                        child: widget.confirmText ??
-                            Text(
-                              "OK",
-                              style: TextStyle(
-                                color: (widget.selectedColor != null &&
-                                        widget.selectedColor !=
-                                            Colors.transparent)
-                                    ? widget.selectedColor!.withOpacity(1)
-                                    : Theme.of(context).primaryColor,
-                              ),
-                            ),
-                      ),
-                    ),
-                  ],
                 ),
-              ),
-            ],
+                Container(
+                  padding: EdgeInsets.all(2),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () {
+                            widget.onCancelTap(context, widget.initialValue!);
+                          },
+                          child: widget.cancelText ??
+                              Text(
+                                "CANCEL",
+                                style: TextStyle(
+                                  color: (widget.selectedColor != null &&
+                                          widget.selectedColor !=
+                                              Colors.transparent)
+                                      ? widget.selectedColor!.withOpacity(1)
+                                      : Theme.of(context).primaryColor,
+                                ),
+                              ),
+                        ),
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () {
+                            widget.onConfirmTap(
+                                context, _selectedValues, widget.onConfirm);
+                          },
+                          child: widget.confirmText ??
+                              Text(
+                                "OK",
+                                style: TextStyle(
+                                  color: (widget.selectedColor != null &&
+                                          widget.selectedColor !=
+                                              Colors.transparent)
+                                      ? widget.selectedColor!.withOpacity(1)
+                                      : Theme.of(context).primaryColor,
+                                ),
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           );
         },
       ),

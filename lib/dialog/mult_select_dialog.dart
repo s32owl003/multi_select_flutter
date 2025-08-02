@@ -120,7 +120,7 @@ class _MultiSelectDialogState<V> extends State<MultiSelectDialog<V>> {
     return Theme(
       data: ThemeData(
         unselectedWidgetColor: widget.unselectedColor ?? Colors.black54,
-        accentColor: widget.selectedColor ?? Theme.of(context).primaryColor,
+        colorScheme: ColorScheme.fromSwatch().copyWith(secondary: widget.selectedColor ?? Theme.of(context).primaryColor),
       ),
       child: CheckboxListTile(
         checkColor: widget.checkColor,
@@ -200,107 +200,109 @@ class _MultiSelectDialogState<V> extends State<MultiSelectDialog<V>> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      backgroundColor: widget.backgroundColor,
-      title: widget.searchable == false
-          ? widget.title ?? Text("Select")
-          : Container(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  _showSearch
-                      ? Expanded(
-                          child: Container(
-                            padding: EdgeInsets.only(left: 10),
-                            child: TextField(
-                              style: widget.searchTextStyle,
-                              decoration: InputDecoration(
-                                hintStyle: widget.searchHintStyle,
-                                hintText: widget.searchHint ?? "Search",
-                                focusedBorder: UnderlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: widget.selectedColor ??
-                                        Theme.of(context).primaryColor,
+    return SafeArea(
+      child: AlertDialog(
+        backgroundColor: widget.backgroundColor,
+        title: widget.searchable == false
+            ? widget.title ?? Text("Select")
+            : Container(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    _showSearch
+                        ? Expanded(
+                            child: Container(
+                              padding: EdgeInsets.only(left: 10),
+                              child: TextField(
+                                style: widget.searchTextStyle,
+                                decoration: InputDecoration(
+                                  hintStyle: widget.searchHintStyle,
+                                  hintText: widget.searchHint ?? "Search",
+                                  focusedBorder: UnderlineInputBorder(
+                                    borderSide: BorderSide(
+                                      color: widget.selectedColor ??
+                                          Theme.of(context).primaryColor,
+                                    ),
                                   ),
                                 ),
+                                onChanged: (val) {
+                                  setState(() {
+                                    _items = widget.updateSearchQuery(
+                                        val, widget.items);
+                                  });
+                                },
                               ),
-                              onChanged: (val) {
-                                setState(() {
-                                  _items = widget.updateSearchQuery(
-                                      val, widget.items);
-                                });
-                              },
                             ),
-                          ),
-                        )
-                      : widget.title ?? Text("Select"),
-                  IconButton(
-                    icon: _showSearch
-                        ? widget.closeSearchIcon ?? Icon(Icons.close)
-                        : widget.searchIcon ?? Icon(Icons.search),
-                    onPressed: () {
-                      setState(() {
-                        _showSearch = !_showSearch;
-                        if (!_showSearch) _items = widget.items;
-                      });
-                    },
+                          )
+                        : widget.title ?? Text("Select"),
+                    IconButton(
+                      icon: _showSearch
+                          ? widget.closeSearchIcon ?? Icon(Icons.close)
+                          : widget.searchIcon ?? Icon(Icons.search),
+                      onPressed: () {
+                        setState(() {
+                          _showSearch = !_showSearch;
+                          if (!_showSearch) _items = widget.items;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+        contentPadding:
+            widget.listType == null || widget.listType == MultiSelectListType.LIST
+                ? EdgeInsets.only(top: 12.0)
+                : EdgeInsets.all(20),
+        content: Container(
+          height: widget.height,
+          width: MediaQuery.of(context).size.width * 0.72,
+          child: widget.listType == null ||
+                  widget.listType == MultiSelectListType.LIST
+              ? ListView.builder(
+                  itemCount: _items.length,
+                  itemBuilder: (context, index) {
+                    return _buildListItem(_items[index]);
+                  },
+                )
+              : SingleChildScrollView(
+                  child: Wrap(
+                    children: _items.map(_buildChipItem).toList(),
                   ),
-                ],
-              ),
-            ),
-      contentPadding:
-          widget.listType == null || widget.listType == MultiSelectListType.LIST
-              ? EdgeInsets.only(top: 12.0)
-              : EdgeInsets.all(20),
-      content: Container(
-        height: widget.height,
-        width: MediaQuery.of(context).size.width * 0.72,
-        child: widget.listType == null ||
-                widget.listType == MultiSelectListType.LIST
-            ? ListView.builder(
-                itemCount: _items.length,
-                itemBuilder: (context, index) {
-                  return _buildListItem(_items[index]);
-                },
-              )
-            : SingleChildScrollView(
-                child: Wrap(
-                  children: _items.map(_buildChipItem).toList(),
                 ),
-              ),
-      ),
-      actions: <Widget>[
-        TextButton(
-          child: widget.cancelText ??
-              Text(
-                "CANCEL",
-                style: TextStyle(
-                  color: (widget.selectedColor != null &&
-                          widget.selectedColor != Colors.transparent)
-                      ? widget.selectedColor!.withOpacity(1)
-                      : Theme.of(context).primaryColor,
-                ),
-              ),
-          onPressed: () {
-            widget.onCancelTap(context, widget.initialValue!);
-          },
         ),
-        TextButton(
-          child: widget.confirmText ??
-              Text(
-                'OK',
-                style: TextStyle(
-                  color: (widget.selectedColor != null &&
-                          widget.selectedColor != Colors.transparent)
-                      ? widget.selectedColor!.withOpacity(1)
-                      : Theme.of(context).primaryColor,
+        actions: <Widget>[
+          TextButton(
+            child: widget.cancelText ??
+                Text(
+                  "CANCEL",
+                  style: TextStyle(
+                    color: (widget.selectedColor != null &&
+                            widget.selectedColor != Colors.transparent)
+                        ? widget.selectedColor!.withOpacity(1)
+                        : Theme.of(context).primaryColor,
+                  ),
                 ),
-              ),
-          onPressed: () {
-            widget.onConfirmTap(context, _selectedValues, widget.onConfirm);
-          },
-        )
-      ],
+            onPressed: () {
+              widget.onCancelTap(context, widget.initialValue!);
+            },
+          ),
+          TextButton(
+            child: widget.confirmText ??
+                Text(
+                  'OK',
+                  style: TextStyle(
+                    color: (widget.selectedColor != null &&
+                            widget.selectedColor != Colors.transparent)
+                        ? widget.selectedColor!.withOpacity(1)
+                        : Theme.of(context).primaryColor,
+                  ),
+                ),
+            onPressed: () {
+              widget.onConfirmTap(context, _selectedValues, widget.onConfirm);
+            },
+          )
+        ],
+      ),
     );
   }
 }

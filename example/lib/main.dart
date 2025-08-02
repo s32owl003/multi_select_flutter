@@ -84,6 +84,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    Function(List<Animal>)? setToDefaultFcn;
+    Function(Function(List<Animal>)) registerSetToDefaultFcn=(fcn){
+      setToDefaultFcn=fcn;
+      print(123);
+    };
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
@@ -211,6 +216,12 @@ class _MyHomePageState extends State<MyHomePage> {
               //################################################################################################
               // MultiSelectChipField
               //################################################################################################
+              TextButton(onPressed: (){
+                  print(123);
+                  if(setToDefaultFcn!=null){
+                    setToDefaultFcn!([_animals[4], _animals[7], _animals[9]]);
+                  }},
+                  child: Text("reset")),
               MultiSelectChipField<Animal>(
                 items: _items,
                 initialValue: [_animals[4], _animals[7], _animals[9]],
@@ -224,6 +235,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 onTap: (values) {
                   //_selectedAnimals4 = values;
                 },
+                addForceChangeValueFunction: registerSetToDefaultFcn,
               ),
               SizedBox(height: 40),
               //################################################################################################

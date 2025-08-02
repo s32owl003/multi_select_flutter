@@ -85,6 +85,8 @@ class MultiSelectChipField<V> extends FormField<List<V>> {
   final FormFieldSetter<List<V>>? onSaved;
   final GlobalKey<FormFieldState>? key;
 
+  final Function(Function(List<V>))? addForceChangeValueFunction;
+
   MultiSelectChipField({
     required this.items,
     this.decoration,
@@ -116,6 +118,7 @@ class MultiSelectChipField<V> extends FormField<List<V>> {
     this.scrollBar,
     this.showHeader = true,
     this.chipWidth,
+    this.addForceChangeValueFunction,
   }) : super(
             key: key,
             onSaved: onSaved,
@@ -150,6 +153,7 @@ class MultiSelectChipField<V> extends FormField<List<V>> {
                 scrollBar: scrollBar,
                 showHeader: showHeader,
                 chipWidth: chipWidth,
+                addForceChangeValueFunction: addForceChangeValueFunction,
               );
               return _MultiSelectChipFieldView<V>.withState(view as _MultiSelectChipFieldView<V>, state);
             });
@@ -187,6 +191,7 @@ class _MultiSelectChipFieldView<V> extends StatefulWidget
   final HorizontalScrollBar? scrollBar;
   final bool showHeader;
   final double? chipWidth;
+  final Function(Function(List<V>))? addForceChangeValueFunction;
 
   _MultiSelectChipFieldView({
     required this.items,
@@ -216,6 +221,7 @@ class _MultiSelectChipFieldView<V> extends StatefulWidget
     this.scrollBar,
     this.showHeader = true,
     this.chipWidth,
+    this.addForceChangeValueFunction,
   });
 
   /// This constructor allows a FormFieldState to be passed in. Called by MultiSelectChipField.
@@ -248,6 +254,7 @@ class _MultiSelectChipFieldView<V> extends StatefulWidget
         scrollBar = field.scrollBar,
         showHeader = field.showHeader,
         chipWidth = field.chipWidth,
+        addForceChangeValueFunction=field.addForceChangeValueFunction,
         state = state;
 
   @override
@@ -256,8 +263,8 @@ class _MultiSelectChipFieldView<V> extends StatefulWidget
 }
 
 class __MultiSelectChipFieldViewState<V>
-    extends State<_MultiSelectChipFieldView<V?>> {
-  List<V?> _selectedValues = [];
+    extends State<_MultiSelectChipFieldView<V>> {
+  List<V> _selectedValues = [];
   bool _showSearch = false;
   List<MultiSelectItem> _items;
   ScrollController _scrollController = ScrollController();
@@ -271,6 +278,12 @@ class __MultiSelectChipFieldViewState<V>
     }
     if (widget.scrollControl != null && widget.scroll)
       WidgetsBinding.instance!.addPostFrameCallback((_) => _scrollToPosition());
+    if(widget.addForceChangeValueFunction!=null){
+      widget.addForceChangeValueFunction!((List<V> newList){
+        _selectedValues=newList;
+        widget.state!.didChange(_selectedValues);
+      });
+    }
   }
 
   _scrollToPosition() {
@@ -379,8 +392,7 @@ class __MultiSelectChipFieldViewState<V>
                           MediaQuery.of(context).size.height * 0.08,
                       child: widget.scrollBar != null
                           ? Scrollbar(
-                              isAlwaysShown:
-                                  widget.scrollBar!.isAlwaysShown,
+                              thumbVisibility: widget.scrollBar!.isAlwaysShown,
                               controller: _scrollController,
                               child: ListView.builder(
                                 controller: _scrollController,
@@ -390,7 +402,7 @@ class __MultiSelectChipFieldViewState<V>
                                   return widget.itemBuilder != null
                                       ? widget.itemBuilder!(
                                           _items[index] as MultiSelectItem<V>, widget.state!)
-                                      : _buildItem(_items[index] as MultiSelectItem<V?>);
+                                      : _buildItem(_items[index] as MultiSelectItem<V>);
                                 },
                               ),
                             )
@@ -402,7 +414,7 @@ class __MultiSelectChipFieldViewState<V>
                                 return widget.itemBuilder != null
                                     ? widget.itemBuilder!(
                                         _items[index] as MultiSelectItem<V>, widget.state!)
-                                    : _buildItem(_items[index] as MultiSelectItem<V?>);
+                                    : _buildItem(_items[index] as MultiSelectItem<V>);
                               },
                             ),
                     )
@@ -417,7 +429,7 @@ class __MultiSelectChipFieldViewState<V>
                                         widget.itemBuilder!(item as MultiSelectItem<V>, widget.state!))
                                     .toList()
                                 : _items
-                                    .map((item) => _buildItem(item as MultiSelectItem<V?>))
+                                    .map((item) => _buildItem(item as MultiSelectItem<V>))
                                     .toList()
                             ,
                       ),
@@ -445,7 +457,7 @@ class __MultiSelectChipFieldViewState<V>
     );
   }
 
-  Widget _buildItem(MultiSelectItem<V?> item) {
+  Widget _buildItem(MultiSelectItem<V> item) {
     return Container(
       margin: EdgeInsets.all(0),
       padding: const EdgeInsets.all(2.0),
@@ -508,8 +520,8 @@ class __MultiSelectChipFieldViewState<V>
                 : widget.selectedChipColor != null
                     ? widget.selectedChipColor
                     : Theme.of(context).primaryColor.withOpacity(0.33),
-        onSelected: (_) {
-          if (_) {
+        onSelected: (selected) {
+          if (selected) {
             _selectedValues.add(item.value);
             if (widget.state != null) {
               widget.state!.didChange(_selectedValues);

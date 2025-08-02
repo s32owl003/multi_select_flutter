@@ -372,36 +372,38 @@ class __MultiSelectBottomSheetFieldViewState<V>
         isScrollControlled: true,
         context: context,
         builder: (context) {
-          return MultiSelectBottomSheet<V>(
-            checkColor: widget.checkColor,
-            selectedItemsTextStyle: widget.selectedItemsTextStyle,
-            searchTextStyle: widget.searchTextStyle,
-            searchHintStyle: widget.searchHintStyle,
-            itemsTextStyle: widget.itemsTextStyle,
-            searchIcon: widget.searchIcon,
-            closeSearchIcon: widget.closeSearchIcon,
-            unselectedColor: widget.unselectedColor,
-            colorator: widget.colorator,
-            searchHint: widget.searchHint,
-            selectedColor: widget.selectedColor,
-            listType: widget.listType,
-            items: widget.items,
-            cancelText: widget.cancelText,
-            confirmText: widget.confirmText,
-            initialValue: _selectedItems,
-            onConfirm: (selected) {
-              if (widget.state != null) {
-                widget.state!.didChange(selected);
-              }
-              _selectedItems = selected;
-              if (widget.onConfirm != null) widget.onConfirm!(selected);
-            },
-            onSelectionChanged: widget.onSelectionChanged,
-            searchable: widget.searchable,
-            title: widget.title,
-            initialChildSize: widget.initialChildSize,
-            minChildSize: widget.minChildSize,
-            maxChildSize: widget.maxChildSize,
+          return SafeArea(
+            child: MultiSelectBottomSheet<V>(
+              checkColor: widget.checkColor,
+              selectedItemsTextStyle: widget.selectedItemsTextStyle,
+              searchTextStyle: widget.searchTextStyle,
+              searchHintStyle: widget.searchHintStyle,
+              itemsTextStyle: widget.itemsTextStyle,
+              searchIcon: widget.searchIcon,
+              closeSearchIcon: widget.closeSearchIcon,
+              unselectedColor: widget.unselectedColor,
+              colorator: widget.colorator,
+              searchHint: widget.searchHint,
+              selectedColor: widget.selectedColor,
+              listType: widget.listType,
+              items: widget.items,
+              cancelText: widget.cancelText,
+              confirmText: widget.confirmText,
+              initialValue: _selectedItems,
+              onConfirm: (selected) {
+                if (widget.state != null) {
+                  widget.state!.didChange(selected);
+                }
+                _selectedItems = selected;
+                if (widget.onConfirm != null) widget.onConfirm!(selected);
+              },
+              onSelectionChanged: widget.onSelectionChanged,
+              searchable: widget.searchable,
+              title: widget.title,
+              initialChildSize: widget.initialChildSize,
+              minChildSize: widget.minChildSize,
+              maxChildSize: widget.maxChildSize,
+            ),
           );
         });
   }
